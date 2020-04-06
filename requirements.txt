@@ -1,0 +1,4 @@
+resampy
+python_speech_features
+scikit-learn
+tensorflow-gpu>=1.15.2
