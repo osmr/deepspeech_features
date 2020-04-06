@@ -89,6 +89,27 @@ def pure_conv_audio_to_deepspeech(audio,
                                   audio_window_size,
                                   audio_window_stride,
                                   net_fn):
+    """
+    Core routine for converting audion into DeepSpeech features.
+
+    Parameters
+    ----------
+    audio : np.array
+        Audio data.
+    audio_sample_rate : int
+        Audio sample rate.
+    audio_window_size : int
+        Audio window size.
+    audio_window_stride : int
+        Audio window stride.
+    net_fn : func
+        Function for DeepSpeech model call.
+
+    Returns
+    -------
+    np.array
+        DeepSpeech features.
+    """
     target_sample_rate = 16000
     resampled_audio = resampy.resample(
         x=audio.astype(np.float),
@@ -127,6 +148,25 @@ def conv_audio_to_deepspeech_input_vector(audio,
                                           sample_rate,
                                           num_cepstrum,
                                           num_context):
+    """
+    Convert audio raw data into DeepSpeech input vector.
+
+    Parameters
+    ----------
+    audio : np.array
+        Audio data.
+    audio_sample_rate : int
+        Audio sample rate.
+    num_cepstrum : int
+        Number of cepstrum.
+    num_context : int
+        Number of context.
+
+    Returns
+    -------
+    np.array
+        DeepSpeech input vector.
+    """
     # Get mfcc coefficients:
     features = mfcc(
         signal=audio,
@@ -165,6 +205,25 @@ def interpolate_features(features,
                          input_rate,
                          output_rate,
                          output_len):
+    """
+    Interpolate DeepSpeech features.
+
+    Parameters
+    ----------
+    features : np.array
+        DeepSpeech features.
+    input_rate : int
+        input rate (FPS).
+    output_rate : int
+        Output rate (FPS).
+    output_len : int
+        Output data length.
+
+    Returns
+    -------
+    np.array
+        Interpolated data.
+    """
     input_len = features.shape[0]
     num_features = features.shape[1]
     input_timestamps = np.arange(input_len) / float(input_rate)
