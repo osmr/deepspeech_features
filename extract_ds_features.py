@@ -47,9 +47,9 @@ def extract_features(in_audios,
     Parameters
     ----------
     in_audios : list of str
-        Path to input audio file.
+        Paths to input audio files.
     out_files : list of str
-        Path to output file with DeepSpeech features.
+        Paths to output files with DeepSpeech features.
     deepspeech_pb_path : str
         Path to DeepSpeech 0.1.0 frozen model.
     """
@@ -71,7 +71,11 @@ def main():
     in_audio = os.path.expanduser(args.input)
     if not os.path.exists(in_audio):
         raise Exception("Input file/directory doesn't exist: {}".format(in_audio))
-    deepspeech_pb_path = os.path.expanduser(args.deepspeech)
+    deepspeech_pb_path = args.deepspeech
+    if deepspeech_pb_path is None:
+        deepspeech_pb_path = ""
+    if deepspeech_pb_path:
+        deepspeech_pb_path = os.path.expanduser(args.deepspeech)
     if not os.path.exists(deepspeech_pb_path):
         deepspeech_pb_path = get_deepspeech_model_file()
     if os.path.isfile(in_audio):

@@ -16,6 +16,22 @@ def conv_audios_to_deepspeech(audios,
                               deepspeech_pb_path,
                               audio_window_size=16,
                               audio_window_stride=1):
+    """
+    Convert list of audio files into files with DeepSpeech features.
+
+    Parameters
+    ----------
+    audios : list of str
+        Paths to input audio files.
+    out_files : list of str
+        Paths to output files with DeepSpeech features.
+    deepspeech_pb_path : str
+        Path to DeepSpeech 0.1.0 frozen model.
+    audio_window_size : int, default 16
+        Audio window size.
+    audio_window_stride : int, default 1
+        Audio window stride.
+    """
     graph, logits_ph, input_node_ph, input_lengths_ph = prepare_deepspeech_net(deepspeech_pb_path)
 
     with tf.compat.v1.Session(graph=graph) as sess:
@@ -35,6 +51,25 @@ def conv_audios_to_deepspeech(audios,
 
 
 def prepare_deepspeech_net(deepspeech_pb_path):
+    """
+    Load and prepare DeepSpeech network.
+
+    Parameters
+    ----------
+    deepspeech_pb_path : str
+        Path to DeepSpeech 0.1.0 frozen model.
+
+    Returns
+    -------
+    graph : obj
+        ThensorFlow graph.
+    logits_ph : obj
+        ThensorFlow placeholder for `logits`.
+    input_node_ph : obj
+        ThensorFlow placeholder for `input_node`.
+    input_lengths_ph : obj
+        ThensorFlow placeholder for `input_lengths`.
+    """
     # Load graph and place_holders:
     with tf.io.gfile.GFile(deepspeech_pb_path, "rb") as f:
         graph_def = tf.compat.v1.GraphDef()
