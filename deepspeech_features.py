@@ -1,5 +1,6 @@
 """
     DeepSpeech features processing routines.
+    NB: Based on VOCA code. See the corresponding license restrictions.
 """
 
 __all__ = ['conv_audios_to_deepspeech']
