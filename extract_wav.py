@@ -50,7 +50,8 @@ def extract_audio(in_video,
         out_audio = file_stem + ".wav"
     # command1 = "ffmpeg -i {in_video} -vn -acodec copy {aac_audio}"
     # command2 = "ffmpeg -i {aac_audio} -vn -acodec pcm_s16le -ac 1 -ar 22000 {out_audio}"
-    command = "ffmpeg -i {in_video} -vn -acodec pcm_s16le -ac 1 -ar 22000 {out_audio}"
+    # command = "ffmpeg -i {in_video} -vn -acodec pcm_s16le -ac 1 -ar 22000 {out_audio}"
+    command = "ffmpeg -i {in_video} -vn -acodec pcm_s16le -ac 1 -ar 16000 {out_audio}"
     subprocess.call([command.format(in_video=in_video, out_audio=out_audio)], shell=True)
 
 
@@ -67,15 +68,19 @@ def main():
             in_video=in_video,
             out_audio=args.out_audio)
     else:
+        video_file_paths = []
         for file_name in os.listdir(in_video):
             if not os.path.isfile(os.path.join(in_video, file_name)):
                 continue
             _, file_ext = os.path.splitext(file_name)
             if file_ext.lower() in (".mp4", ".mkv", ".avi"):
                 video_file_path = os.path.join(in_video, file_name)
-                extract_audio(
-                    in_video=video_file_path,
-                    out_audio="")
+                video_file_paths.append(video_file_path)
+        video_file_paths = sorted(video_file_paths)
+        for video_file_path in video_file_paths:
+            extract_audio(
+                in_video=video_file_path,
+                out_audio="")
 
 
 if __name__ == "__main__":

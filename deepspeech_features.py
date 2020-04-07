@@ -15,6 +15,7 @@ import tensorflow as tf
 
 def conv_audios_to_deepspeech(audios,
                               out_files,
+                              num_frames_info,
                               deepspeech_pb_path,
                               audio_window_size=16,
                               audio_window_stride=1):
@@ -23,10 +24,12 @@ def conv_audios_to_deepspeech(audios,
 
     Parameters
     ----------
-    audios : list of str
+    audios : list of str or list of None
         Paths to input audio files.
     out_files : list of str
         Paths to output files with DeepSpeech features.
+    num_frames_info : list of int
+        List of numbers of frames.
     deepspeech_pb_path : str
         Path to DeepSpeech 0.1.0 frozen model.
     audio_window_size : int, default 16
@@ -37,7 +40,7 @@ def conv_audios_to_deepspeech(audios,
     graph, logits_ph, input_node_ph, input_lengths_ph = prepare_deepspeech_net(deepspeech_pb_path)
 
     with tf.compat.v1.Session(graph=graph) as sess:
-        for audio_file_path, out_file_path in zip(audios, out_files):
+        for audio_file_path, out_file_path, num_frames in zip(audios, out_files, num_frames_info):
             audio_sample_rate, audio = wavfile.read(audio_file_path)
             if audio.ndim != 1:
                 warnings.warn("Audio has multiple channels, the first channel is used")
@@ -47,6 +50,7 @@ def conv_audios_to_deepspeech(audios,
                 audio_sample_rate=audio_sample_rate,
                 audio_window_size=audio_window_size,
                 audio_window_stride=audio_window_stride,
+                num_frames=num_frames,
                 net_fn=lambda x: sess.run(
                     logits_ph,
                     feed_dict={
@@ -93,6 +97,7 @@ def pure_conv_audio_to_deepspeech(audio,
                                   audio_sample_rate,
                                   audio_window_size,
                                   audio_window_stride,
+                                  num_frames,
                                   net_fn):
     """
     Core routine for converting audion into DeepSpeech features.
@@ -107,6 +112,8 @@ def pure_conv_audio_to_deepspeech(audio,
         Audio window size.
     audio_window_stride : int
         Audio window stride.
+    num_frames : int or None
+        Numbers of frames.
     net_fn : func
         Function for DeepSpeech model call.
 
@@ -116,10 +123,13 @@ def pure_conv_audio_to_deepspeech(audio,
         DeepSpeech features.
     """
     target_sample_rate = 16000
-    resampled_audio = resampy.resample(
-        x=audio.astype(np.float),
-        sr_orig=audio_sample_rate,
-        sr_new=target_sample_rate)
+    if audio_sample_rate != target_sample_rate:
+        resampled_audio = resampy.resample(
+            x=audio.astype(np.float),
+            sr_orig=audio_sample_rate,
+            sr_new=target_sample_rate)
+    else:
+        resampled_audio = audio.astype(np.float)
     input_vector = conv_audio_to_deepspeech_input_vector(
         audio=resampled_audio.astype(np.int16),
         sample_rate=target_sample_rate,
@@ -130,14 +140,16 @@ def pure_conv_audio_to_deepspeech(audio,
 
     deepspeech_fps = 50
     video_fps = 60
-    if video_fps != deepspeech_fps:
-        audio_len_s = float(audio.shape[0]) / audio_sample_rate
+    audio_len_s = float(audio.shape[0]) / audio_sample_rate
+    if num_frames is None:
         num_frames = int(round(audio_len_s * video_fps))
-        network_output = interpolate_features(
-            features=network_output[:, 0],
-            input_rate=deepspeech_fps,
-            output_rate=video_fps,
-            output_len=num_frames)
+    else:
+        video_fps = num_frames / audio_len_s
+    network_output = interpolate_features(
+        features=network_output[:, 0],
+        input_rate=deepspeech_fps,
+        output_rate=video_fps,
+        output_len=num_frames)
 
     # Make windows:
     zero_pad = np.zeros((int(audio_window_size / 2), network_output.shape[1]))
