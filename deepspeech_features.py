@@ -6,6 +6,7 @@
 __all__ = ['conv_audios_to_deepspeech']
 
 import numpy as np
+import warnings
 import resampy
 from scipy.io import wavfile
 from python_speech_features import mfcc
@@ -38,6 +39,9 @@ def conv_audios_to_deepspeech(audios,
     with tf.compat.v1.Session(graph=graph) as sess:
         for audio_file_path, out_file_path in zip(audios, out_files):
             audio_sample_rate, audio = wavfile.read(audio_file_path)
+            if audio.ndim != 1:
+                warnings.warn("Audio has multiple channels, the first channel is used")
+                audio = audio[:, 0]
             ds_features = pure_conv_audio_to_deepspeech(
                 audio=audio,
                 audio_sample_rate=audio_sample_rate,
